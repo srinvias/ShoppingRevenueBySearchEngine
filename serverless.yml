@@ -1,0 +1,27 @@
+service: blog-github-actions
+provider:
+  name: aws
+  runtime: python3.7
+  region: us-east-1
+
+custom:
+  pythonRequirements:
+    dockerizePip: true
+
+package:
+  individually: false
+  exclude:
+    - package.json
+    - package-log.json
+    - node_modules/**
+
+functions:
+  get_joke:
+    handler: handler.get_joke
+    events:
+      - http:
+          path: joke
+          method: get
+
+plugins:
+  - serverless-python-requirements
