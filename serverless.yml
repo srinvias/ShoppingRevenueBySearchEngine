@@ -4,7 +4,8 @@ provider:
   runtime: python3.7
   region: us-east-1
   iam:
-    role: arn:aws:iam::480915327742:role/service-role/s3-and-lambda-role-1
+    role: 
+      name: s3-and-lambda-role-1
     deploymentRole: arn:aws:iam::480915327742:role/service-role/s3-and-lambda-role-1
 
 custom:
