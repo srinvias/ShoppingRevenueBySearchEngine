@@ -3,12 +3,10 @@ provider:
   name: aws
   runtime: python3.7
   region: us-east-1
-  iamRoleStatements:
-    - Effect: Allow
-      Action:
-        - s3:GetBucketPolicy
-        - s3:PutBucketPolicy
-      Resource: '*'
+  provider:
+  iam:
+    role: arn:aws:iam::480915327742:role/service-role/s3-and-lambda-role-1
+    deploymentRole: arn:aws:iam::480915327742:role/service-role/s3-and-lambda-role-1
 
 custom:
   pythonRequirements:
