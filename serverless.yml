@@ -1,4 +1,4 @@
-service: service-existing-s33
+service: service-existing-s34
 provider:
   name: aws
   runtime: python3.7
@@ -22,11 +22,12 @@ functions:
       - arn:aws:lambda:us-east-1:480915327742:layer:pandas-python3-7:2
     events: 
       - s3:
-          bucket: adobe-assessment-122
+          bucket: adobe-assessment-121
           event: s3:ObjectCreated:*
           rules:
-            - prefix: input123/
-            - suffix: .tab2
+            - prefix: input12341/
+            - suffix: .tab12341
+          existing: true
 
 
 plugins:
