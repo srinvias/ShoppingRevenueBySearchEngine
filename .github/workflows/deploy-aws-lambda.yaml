@@ -1,4 +1,4 @@
-name: deploy-existing-s35
+name: deploy-sample-22
 
 on:
   push:

@@ -1,14 +1,14 @@
 {
   "service": {
-    "service": "service-existing-s35",
+    "service": "service-existing-s34",
     "serviceObject": {
-      "name": "service-existing-s35"
+      "name": "service-existing-s34"
     },
     "provider": {
       "name": "aws",
       "runtime": "python3.7",
+      "stage": "prod",
       "region": "us-east-1",
-      "stage": "dev",
       "versionFunctions": true,
       "compiledCloudFormationTemplate": {
         "AWSTemplateFormatVersion": "2010-09-09",
@@ -83,10 +83,10 @@
               }
             }
           },
-          "ExUnderscores3LogGroup": {
+          "SampleLogGroup": {
             "Type": "AWS::Logs::LogGroup",
             "Properties": {
-              "LogGroupName": "/aws/lambda/service-existing-s35-dev-ex_s3"
+              "LogGroupName": "/aws/lambda/service-existing-s34-prod-sample"
             }
           },
           "IamRoleLambdaExecution": {
@@ -114,8 +114,8 @@
                     "Fn::Join": [
                       "-",
                       [
-                        "service-existing-s35",
-                        "dev",
+                        "service-existing-s34",
+                        "prod",
                         "lambda"
                       ]
                     ]
@@ -131,7 +131,7 @@
                         ],
                         "Resource": [
                           {
-                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/service-existing-s35-dev*:*"
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/service-existing-s34-prod*:*"
                           }
                         ]
                       },
@@ -142,7 +142,7 @@
                         ],
                         "Resource": [
                           {
-                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/service-existing-s35-dev*:*:*"
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/service-existing-s34-prod*:*:*"
                           }
                         ]
                       }
@@ -155,8 +155,8 @@
                 "Fn::Join": [
                   "-",
                   [
-                    "service-existing-s35",
-                    "dev",
+                    "service-existing-s34",
+                    "prod",
                     {
                       "Ref": "AWS::Region"
                     },
@@ -166,18 +166,18 @@
               }
             }
           },
-          "ExUnderscores3LambdaFunction": {
+          "SampleLambdaFunction": {
             "Type": "AWS::Lambda::Function",
             "Properties": {
               "Code": {
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/service-existing-s35/dev/1629700225531-2021-08-23T06:30:25.531Z/service-existing-s35.zip"
+                "S3Key": "serverless/service-existing-s34/prod/1629701996378-2021-08-23T06:59:56.378Z/service-existing-s34.zip"
               },
-              "Handler": "handler.ex_s3",
+              "Handler": "handler.sample",
               "Runtime": "python3.7",
-              "FunctionName": "service-existing-s35-dev-ex_s3",
+              "FunctionName": "service-existing-s34-prod-sample",
               "MemorySize": 1024,
               "Timeout": 6,
               "Role": {
@@ -191,18 +191,163 @@
               ]
             },
             "DependsOn": [
-              "ExUnderscores3LogGroup"
+              "SampleLogGroup"
             ]
           },
-          "ExUnderscores3LambdaVersionqKl6D31z4CqGuq7X9POPzimhCgJuW60Su57XUdCk4": {
+          "SampleLambdaVersionwJ5JsI9gB9UaGZc32fSE3QZiYAMhLpUjZhp3BLpE": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
-                "Ref": "ExUnderscores3LambdaFunction"
+                "Ref": "SampleLambdaFunction"
               },
-              "CodeSha256": "2mpbfujIsF/qhrkWSc799y2yExIrMI8vYG6WWTFcsOs="
+              "CodeSha256": "pFm/P0JlEFiVyR0mk0d2CYQmoffnuHNHEUVOUI1kLmY="
             }
+          },
+          "SampleCustomS31": {
+            "Type": "Custom::S3",
+            "Version": 1,
+            "DependsOn": [
+              "SampleLambdaFunction",
+              "CustomDashresourceDashexistingDashs3LambdaFunction"
+            ],
+            "Properties": {
+              "ServiceToken": {
+                "Fn::GetAtt": [
+                  "CustomDashresourceDashexistingDashs3LambdaFunction",
+                  "Arn"
+                ]
+              },
+              "FunctionName": "service-existing-s34-prod-sample",
+              "BucketName": "adobe-assessment",
+              "BucketConfigs": [
+                {
+                  "Event": "s3:ObjectCreated:*",
+                  "Rules": [
+                    {
+                      "Prefix": "input-event/"
+                    },
+                    {
+                      "Suffix": ".tabs"
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "IamRoleCustomResourcesLambdaExecution": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+              "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": [
+                        "lambda.amazonaws.com"
+                      ]
+                    },
+                    "Action": [
+                      "sts:AssumeRole"
+                    ]
+                  }
+                ]
+              },
+              "Policies": [
+                {
+                  "PolicyName": {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "prod",
+                        "service-existing-s34",
+                        "custom-resources-lambda"
+                      ]
+                    ]
+                  },
+                  "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                      {
+                        "Effect": "Allow",
+                        "Resource": {
+                          "Fn::Join": [
+                            ":",
+                            [
+                              "arn",
+                              {
+                                "Ref": "AWS::Partition"
+                              },
+                              "s3",
+                              "",
+                              "",
+                              "adobe-assessment"
+                            ]
+                          ]
+                        },
+                        "Action": [
+                          "s3:PutBucketNotification",
+                          "s3:GetBucketNotification"
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Resource": {
+                          "Fn::Join": [
+                            ":",
+                            [
+                              "arn",
+                              {
+                                "Ref": "AWS::Partition"
+                              },
+                              "lambda",
+                              {
+                                "Ref": "AWS::Region"
+                              },
+                              {
+                                "Ref": "AWS::AccountId"
+                              },
+                              "function",
+                              "*"
+                            ]
+                          ]
+                        },
+                        "Action": [
+                          "lambda:AddPermission",
+                          "lambda:RemovePermission"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          "CustomDashresourceDashexistingDashs3LambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/service-existing-s34/prod/1629701996378-2021-08-23T06:59:56.378Z/custom-resources.zip"
+              },
+              "FunctionName": "service-existing-s34-prod-custom-resource-existing-s3",
+              "Handler": "s3/handler.handler",
+              "MemorySize": 1024,
+              "Runtime": "nodejs12.x",
+              "Timeout": 180,
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleCustomResourcesLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "IamRoleCustomResourcesLambdaExecution"
+            ]
           }
         },
         "Outputs": {
@@ -211,16 +356,16 @@
               "Ref": "ServerlessDeploymentBucket"
             },
             "Export": {
-              "Name": "sls-service-existing-s35-dev-ServerlessDeploymentBucketName"
+              "Name": "sls-service-existing-s34-prod-ServerlessDeploymentBucketName"
             }
           },
-          "ExUnderscores3LambdaFunctionQualifiedArn": {
+          "SampleLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ExUnderscores3LambdaVersionqKl6D31z4CqGuq7X9POPzimhCgJuW60Su57XUdCk4"
+              "Ref": "SampleLambdaVersionwJ5JsI9gB9UaGZc32fSE3QZiYAMhLpUjZhp3BLpE"
             },
             "Export": {
-              "Name": "sls-service-existing-s35-dev-ExUnderscores3LambdaFunctionQualifiedArn"
+              "Name": "sls-service-existing-s34-prod-SampleLambdaFunctionQualifiedArn"
             }
           }
         }
@@ -319,19 +464,35 @@
     ],
     "pluginsData": {},
     "functions": {
-      "ex_s3": {
-        "handler": "handler.ex_s3",
+      "sample": {
+        "handler": "handler.sample",
         "layers": {
-          "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"ExUnderscores3LambdaFunction\"][\"Properties\"][\"Layers\"]"
+          "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"SampleLambdaFunction\"][\"Properties\"][\"Layers\"]"
         },
-        "events": [],
-        "name": "service-existing-s35-dev-ex_s3",
+        "events": [
+          {
+            "s3": {
+              "bucket": "adobe-assessment",
+              "event": "s3:ObjectCreated:*",
+              "rules": [
+                {
+                  "prefix": "input-event/"
+                },
+                {
+                  "suffix": ".tabs"
+                }
+              ],
+              "existing": true
+            }
+          }
+        ],
+        "name": "service-existing-s34-prod-sample",
         "package": {},
         "memory": 1024,
         "timeout": 6,
         "runtime": "python3.7",
         "vpc": {},
-        "versionLogicalId": "ExUnderscores3LambdaVersionqKl6D31z4CqGuq7X9POPzimhCgJuW60Su57XUdCk4"
+        "versionLogicalId": "SampleLambdaVersionwJ5JsI9gB9UaGZc32fSE3QZiYAMhLpUjZhp3BLpE"
       }
     },
     "configValidationMode": "warn",
@@ -353,8 +514,8 @@
           "package-log.json",
           "node_modules/**"
         ],
-        "artifact": "/Users/spadal/actions-aws-lambda-python-master/.serverless/service-existing-s35.zip",
-        "artifactDirectoryName": "serverless/service-existing-s35/dev/1629700225531-2021-08-23T06:30:25.531Z"
+        "artifact": "/Users/spadal/actions-aws-lambda-python-master/.serverless/service-existing-s34.zip",
+        "artifactDirectoryName": "serverless/service-existing-s34/prod/1629701996378-2021-08-23T06:59:56.378Z"
       },
       "functions": {
         "$ref": "$[\"service\"][\"functions\"]"
@@ -365,11 +526,11 @@
     },
     "layers": {},
     "isDashboardMonitoringPreconfigured": false,
-    "artifact": "/Users/spadal/actions-aws-lambda-python-master/.serverless/service-existing-s35.zip"
+    "artifact": "/Users/spadal/actions-aws-lambda-python-master/.serverless/service-existing-s34.zip"
   },
   "package": {
     "individually": false,
-    "artifactDirectoryName": "serverless/service-existing-s35/dev/1629700225531-2021-08-23T06:30:25.531Z",
-    "artifact": "service-existing-s35.zip"
+    "artifactDirectoryName": "serverless/service-existing-s34/prod/1629701996378-2021-08-23T06:59:56.378Z",
+    "artifact": "service-existing-s34.zip"
   }
 }

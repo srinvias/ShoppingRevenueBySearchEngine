@@ -3,7 +3,7 @@ import pyjokes
 import pandas
 
 
-def ex_s3(event, context):
+def sample(event, context):
     body = {
         "message": "Greetings from Githun. Your function is deployed by a Github Actions. Enjoy your joke",
         "joke":pyjokes.get_joke()
