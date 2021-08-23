@@ -17,7 +17,7 @@ package:
 
 functions:
   get_joke:
-    handler: handler.get_joke
+    handler: handler.get_joke1
     events:
       - http:
           path: joke
