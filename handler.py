@@ -2,7 +2,7 @@ import json
 import pyjokes
 
 
-def get_joke1(event, context):
+def get_joke_layer_a(event, context):
     body = {
         "message": "Greetings from Githun. Your function is deployed by a Github Actions. Enjoy your joke",
         "joke":pyjokes.get_joke()

@@ -1,4 +1,4 @@
-service: blog-github-actions
+service: s3-to-lambda-with-layer-actions
 provider:
   name: aws
   runtime: python3.7
@@ -16,12 +16,18 @@ package:
     - node_modules/**
 
 functions:
-  get_joke:
-    handler: handler.get_joke1
-    events:
-      - http:
-          path: joke
-          method: get
+  get_joke_layer_actions:
+    handler: handler.get_joke_layer_a
+    layers:
+      - arn:aws:lambda:us-east-1:480915327742:layer:pandas-python3-7:2
+    events: 
+      - s3:
+          bucket: adobe-assessment-4
+          event: s3:ObjectCreated:*
+          rules:
+            - prefix: input/
+            - suffix: .tab
+
 
 plugins:
   - serverless-python-requirements
