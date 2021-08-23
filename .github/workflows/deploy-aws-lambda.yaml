@@ -1,4 +1,4 @@
-name: deploy-aws-lambda
+name: deploy-existing-s3-d
 
 on:
   push:

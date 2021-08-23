@@ -1,4 +1,4 @@
-service: s3-to-lambda-with-layer-actions
+service: service-existing-s3
 provider:
   name: aws
   runtime: python3.7
@@ -16,17 +16,18 @@ package:
     - node_modules/**
 
 functions:
-  get_joke_layer_actions:
-    handler: handler.get_joke_layer_a
+  ex_s3:
+    handler: handler.ex_s3
     layers:
       - arn:aws:lambda:us-east-1:480915327742:layer:pandas-python3-7:2
     events: 
       - s3:
-          bucket: adobe-assessment-4
+          bucket: adobe-assessment-1
           event: s3:ObjectCreated:*
           rules:
-            - prefix: input/
-            - suffix: .tab
+            - prefix: input123/
+            - suffix: .tab2
+          existing: true
 
 
 plugins:
