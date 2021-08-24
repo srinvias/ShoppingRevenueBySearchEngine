@@ -1,8 +1,8 @@
-service: service-existing-s34
+service: s-RevenueFromSearchEngine
 provider:
   name: aws
   runtime: python3.7
-  stage: prod
+  stage: dev
   region: us-east-1
 
 custom:
@@ -17,23 +17,16 @@ package:
     - node_modules/**
 
 functions:
-  sample:
-    handler: handler.sample
+  rfse:
+    handler: src/RevenueFromSearchEngine.main
     layers:
       - arn:aws:lambda:us-east-1:480915327742:layer:pandas-python3-7:2
     events: 
       - s3:
-          bucket: adobe-assessment
+          bucket: adobe-dataengineer
           event: s3:ObjectCreated:*
           rules:
-            - prefix: input-event/
-            - suffix: .tabs
-          existing: true
-
-# layer:
-#   pandas-layer:
-#     path: pandas-layer-dir
-#     name: pandas-layer
-#     retain: true
+            - prefix: prod/input/
+            - suffix: .tab
 plugins:
   - serverless-python-requirements

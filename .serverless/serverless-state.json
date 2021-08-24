@@ -1,8 +1,8 @@
 {
   "service": {
-    "service": "service-existing-s34",
+    "service": "s-RevenueFromSearchEngine",
     "serviceObject": {
-      "name": "service-existing-s34"
+      "name": "s-RevenueFromSearchEngine"
     },
     "provider": {
       "name": "aws",
@@ -83,10 +83,10 @@
               }
             }
           },
-          "SampleLogGroup": {
+          "RfseLogGroup": {
             "Type": "AWS::Logs::LogGroup",
             "Properties": {
-              "LogGroupName": "/aws/lambda/service-existing-s34-prod-sample"
+              "LogGroupName": "/aws/lambda/s-RevenueFromSearchEngine-prod-rfse"
             }
           },
           "IamRoleLambdaExecution": {
@@ -114,7 +114,7 @@
                     "Fn::Join": [
                       "-",
                       [
-                        "service-existing-s34",
+                        "s-RevenueFromSearchEngine",
                         "prod",
                         "lambda"
                       ]
@@ -131,7 +131,7 @@
                         ],
                         "Resource": [
                           {
-                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/service-existing-s34-prod*:*"
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/s-RevenueFromSearchEngine-prod*:*"
                           }
                         ]
                       },
@@ -142,7 +142,7 @@
                         ],
                         "Resource": [
                           {
-                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/service-existing-s34-prod*:*:*"
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/s-RevenueFromSearchEngine-prod*:*:*"
                           }
                         ]
                       }
@@ -155,7 +155,7 @@
                 "Fn::Join": [
                   "-",
                   [
-                    "service-existing-s34",
+                    "s-RevenueFromSearchEngine",
                     "prod",
                     {
                       "Ref": "AWS::Region"
@@ -166,18 +166,18 @@
               }
             }
           },
-          "SampleLambdaFunction": {
+          "RfseLambdaFunction": {
             "Type": "AWS::Lambda::Function",
             "Properties": {
               "Code": {
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/service-existing-s34/prod/1629701996378-2021-08-23T06:59:56.378Z/service-existing-s34.zip"
+                "S3Key": "serverless/s-RevenueFromSearchEngine/prod/1629788794574-2021-08-24T07:06:34.574Z/s-RevenueFromSearchEngine.zip"
               },
-              "Handler": "handler.sample",
+              "Handler": "src/RevenueFromSearchEngine.main",
               "Runtime": "python3.7",
-              "FunctionName": "service-existing-s34-prod-sample",
+              "FunctionName": "s-RevenueFromSearchEngine-prod-rfse",
               "MemorySize": 1024,
               "Timeout": 6,
               "Role": {
@@ -191,24 +191,24 @@
               ]
             },
             "DependsOn": [
-              "SampleLogGroup"
+              "RfseLogGroup"
             ]
           },
-          "SampleLambdaVersionwJ5JsI9gB9UaGZc32fSE3QZiYAMhLpUjZhp3BLpE": {
+          "RfseLambdaVersiondVFa1pysCMgUXZgAOuHqms2Jybsly4HjEt9oPouXU": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
-                "Ref": "SampleLambdaFunction"
+                "Ref": "RfseLambdaFunction"
               },
-              "CodeSha256": "pFm/P0JlEFiVyR0mk0d2CYQmoffnuHNHEUVOUI1kLmY="
+              "CodeSha256": "Qp2/gesrLhY+B0RTxy5WGI8HRCK4u73ppGRJlrZJWbI="
             }
           },
-          "SampleCustomS31": {
+          "RfseCustomS31": {
             "Type": "Custom::S3",
             "Version": 1,
             "DependsOn": [
-              "SampleLambdaFunction",
+              "RfseLambdaFunction",
               "CustomDashresourceDashexistingDashs3LambdaFunction"
             ],
             "Properties": {
@@ -218,17 +218,17 @@
                   "Arn"
                 ]
               },
-              "FunctionName": "service-existing-s34-prod-sample",
-              "BucketName": "adobe-assessment",
+              "FunctionName": "s-RevenueFromSearchEngine-prod-rfse",
+              "BucketName": "adobe-dataengineer",
               "BucketConfigs": [
                 {
                   "Event": "s3:ObjectCreated:*",
                   "Rules": [
                     {
-                      "Prefix": "input-event/"
+                      "Prefix": "prod/input/"
                     },
                     {
-                      "Suffix": ".tabs"
+                      "Suffix": ".tab"
                     }
                   ]
                 }
@@ -261,7 +261,7 @@
                       "-",
                       [
                         "prod",
-                        "service-existing-s34",
+                        "s-RevenueFromSearchEngine",
                         "custom-resources-lambda"
                       ]
                     ]
@@ -282,7 +282,7 @@
                               "s3",
                               "",
                               "",
-                              "adobe-assessment"
+                              "adobe-dataengineer"
                             ]
                           ]
                         },
@@ -331,9 +331,9 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/service-existing-s34/prod/1629701996378-2021-08-23T06:59:56.378Z/custom-resources.zip"
+                "S3Key": "serverless/s-RevenueFromSearchEngine/prod/1629788794574-2021-08-24T07:06:34.574Z/custom-resources.zip"
               },
-              "FunctionName": "service-existing-s34-prod-custom-resource-existing-s3",
+              "FunctionName": "s-RevenueFromSearchEngine-prod-custom-resource-existing-s3",
               "Handler": "s3/handler.handler",
               "MemorySize": 1024,
               "Runtime": "nodejs12.x",
@@ -356,16 +356,16 @@
               "Ref": "ServerlessDeploymentBucket"
             },
             "Export": {
-              "Name": "sls-service-existing-s34-prod-ServerlessDeploymentBucketName"
+              "Name": "sls-s-RevenueFromSearchEngine-prod-ServerlessDeploymentBucketName"
             }
           },
-          "SampleLambdaFunctionQualifiedArn": {
+          "RfseLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "SampleLambdaVersionwJ5JsI9gB9UaGZc32fSE3QZiYAMhLpUjZhp3BLpE"
+              "Ref": "RfseLambdaVersiondVFa1pysCMgUXZgAOuHqms2Jybsly4HjEt9oPouXU"
             },
             "Export": {
-              "Name": "sls-service-existing-s34-prod-SampleLambdaFunctionQualifiedArn"
+              "Name": "sls-s-RevenueFromSearchEngine-prod-RfseLambdaFunctionQualifiedArn"
             }
           }
         }
@@ -464,35 +464,35 @@
     ],
     "pluginsData": {},
     "functions": {
-      "sample": {
-        "handler": "handler.sample",
+      "rfse": {
+        "handler": "src/RevenueFromSearchEngine.main",
         "layers": {
-          "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"SampleLambdaFunction\"][\"Properties\"][\"Layers\"]"
+          "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"RfseLambdaFunction\"][\"Properties\"][\"Layers\"]"
         },
         "events": [
           {
             "s3": {
-              "bucket": "adobe-assessment",
+              "bucket": "adobe-dataengineer",
               "event": "s3:ObjectCreated:*",
               "rules": [
                 {
-                  "prefix": "input-event/"
+                  "prefix": "prod/input/"
                 },
                 {
-                  "suffix": ".tabs"
+                  "suffix": ".tab"
                 }
               ],
               "existing": true
             }
           }
         ],
-        "name": "service-existing-s34-prod-sample",
+        "name": "s-RevenueFromSearchEngine-prod-rfse",
         "package": {},
         "memory": 1024,
         "timeout": 6,
         "runtime": "python3.7",
         "vpc": {},
-        "versionLogicalId": "SampleLambdaVersionwJ5JsI9gB9UaGZc32fSE3QZiYAMhLpUjZhp3BLpE"
+        "versionLogicalId": "RfseLambdaVersiondVFa1pysCMgUXZgAOuHqms2Jybsly4HjEt9oPouXU"
       }
     },
     "configValidationMode": "warn",
@@ -514,8 +514,8 @@
           "package-log.json",
           "node_modules/**"
         ],
-        "artifact": "/Users/spadal/actions-aws-lambda-python-master/.serverless/service-existing-s34.zip",
-        "artifactDirectoryName": "serverless/service-existing-s34/prod/1629701996378-2021-08-23T06:59:56.378Z"
+        "artifact": "/Users/spadal/ShoppingRevenueBySearchEngine-1/.serverless/s-RevenueFromSearchEngine.zip",
+        "artifactDirectoryName": "serverless/s-RevenueFromSearchEngine/prod/1629788794574-2021-08-24T07:06:34.574Z"
       },
       "functions": {
         "$ref": "$[\"service\"][\"functions\"]"
@@ -526,11 +526,11 @@
     },
     "layers": {},
     "isDashboardMonitoringPreconfigured": false,
-    "artifact": "/Users/spadal/actions-aws-lambda-python-master/.serverless/service-existing-s34.zip"
+    "artifact": "/Users/spadal/ShoppingRevenueBySearchEngine-1/.serverless/s-RevenueFromSearchEngine.zip"
   },
   "package": {
     "individually": false,
-    "artifactDirectoryName": "serverless/service-existing-s34/prod/1629701996378-2021-08-23T06:59:56.378Z",
-    "artifact": "service-existing-s34.zip"
+    "artifactDirectoryName": "serverless/s-RevenueFromSearchEngine/prod/1629788794574-2021-08-24T07:06:34.574Z",
+    "artifact": "s-RevenueFromSearchEngine.zip"
   }
 }
