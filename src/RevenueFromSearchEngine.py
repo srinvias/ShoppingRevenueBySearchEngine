@@ -83,9 +83,6 @@ def main(event, context):
     group_data_by_user_and_app = browse_and_purchase_df.groupby(["ip","page_url_domain"])
     
     revenue_by_searchkey_list = []
-    total_revenue = 0
-    search_engine = ''
-    search_key = ''
     for each_user_app, per_user_events_df in group_data_by_user_and_app:
         ip = each_user_app[0]
         page_url_domain = each_user_app[1]
@@ -102,10 +99,10 @@ def main(event, context):
             continue
         
         #Iterate through purchase events and find nearest search event for purchase event - Note : for loop helps if there are multiple purchase events for that domain
-        total_revenue = 0
-        search_engine = ''
-        search_key = ''
         for index, row in purchased_events_df.iterrows():
+            total_revenue = 0
+            search_engine = ''
+            search_key = ''
             pe_hit_time_gmt = row["hit_time_gmt"]
             pe_product_list = row["product_list"]
             
