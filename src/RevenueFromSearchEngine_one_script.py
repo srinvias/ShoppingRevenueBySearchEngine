@@ -1,109 +1,80 @@
-# - RevenueFromSearchEngine.py
+
+"""
+============================================================================================================
+RevenueFromSearchEngine.py
+It is lambda function to process for every s3 triggered put object event
+and get output of search engine , search keyword and corresponding total revenue in descending order
+load ouput to s3 bucket with [YYYY-MM-dd]_SearchKeywordPerformance.tab
+=============================================================================================================
+History
+=============================================================================================================
+ Date           Author                  Desc
+-------------------------------------------------------------------------------------------------------------
+ 2021-08-021   Srinivasarao Padala     New Script Created
+============================================================================================================
+"""
+
 import json
 import boto3
 import pandas as pd
 import re
 from io import StringIO
+import logging
 
-# Pending - 
-# maintains classes
-# logger modules
-# document desction
+import src.Utils as utl
+import src.MyCustomError as mcr
 
-#Custom exception
-class MyCustomError(Exception):
-    def __init__(self, *args):
-        if args:
-            self.message = args[0]
-        else:
-            self.message = None
-    
-    def __str__(self):
-        if self.message:
-            return 'MyCustomError - , {0} '.format(self.message)
-        else:
-            return 'MyCustomError has been raised'
-
-def get_s3filename_from_event(event):
-    if 'Records' not in event:
-            return ''
-    for r in event.get('Records'):
-        # track only objected created events
-        if not ( ( r.get('eventName') == "ObjectCreated:Put" )  and ( 's3' in r ) ) : continue
-        bucket  = r['s3']['bucket']['name']
-        key =  r['s3']['object']['key']
-        return bucket, key
-
-def readFilesFromS3(bucket , key):
-    s3 = boto3.client('s3')
-    s3_response = s3.get_object(Bucket=bucket, Key=key)
-    print("Enter - readFilesFromS3")
-    return s3_response
-
-def writeToS3(bucket , prefix , output_df):
-    print("Write output to s3")
-    from datetime import datetime
-    now = datetime.now()
-    dt_string = now.strftime("%Y-%m-%d")
-    file_name = dt_string + '_SearchKeywordPerformance.tab'
-    s3_path = prefix+'/'+file_name
-    
-    s3 = boto3.client("s3")
-    csv_buf = StringIO()
-    output_df.to_csv(csv_buf, header=True, index=False , sep='\t')
-    csv_buf.seek(0)
-    s3.put_object(Bucket=bucket, Body=csv_buf.getvalue(), Key=s3_path)
-    
-
-def readInputdatatoPandasDataframe(s3_response):
-    print("Enter - readInputdatatoPandasDataframe")
-    status = s3_response.get("ResponseMetadata", {}).get("HTTPStatusCode")
-    if status == 200:
-        print(f"Successful S3 get_object response. Status - {status}")
-        input_df = pd.read_csv(s3_response.get("Body"), sep='\t')
-        return input_df
-    else:
-        raise MyCustomError('Issue in reading S3 files')
-    
-def getDomainAndSearchKey(input, lookingFor='domain'):
-    m = re.search('(https|http)?://([A-Za-z_0-9.-]+)((\/search)?.*(\?|&)(q=|p=)([a-zA-Z\+0-9]+).*)*', input)
-    if m:
-        if lookingFor=='domain':
-            return m.group(2)
-        elif lookingFor=='searchkey':
-            searchkey = m.group(7)
-            return searchkey.replace("+"," ")
-    else:
-        raise MyCustomError('Issue in Regex to get domain or searchkey')
-
-def revenueFromProductList(product_list):
-    revenue = 0
-    for each_product in product_list.split(","):
-        revenue = revenue + int(each_product.split(";")[3])
-    return revenue
-    
+logger = logging.getLogger('RevenueFromSearchEngine')
+logger.setLevel(logging.DEBUG)
+logger.addHandler(logging.StreamHandler())
 
 def main(event, context):
-    # TODO implement
+    """
+        lambda handler function to read each in put file from s3 and process them to find out search engine & keyword and corresponding total revenue
+        Parameters
+        ----------
+        arg1 : json , json
+            event  - contains input data info & metadata of triggered event
+            context - provides methods and properties that provide information about the invocation, function, and runtime environment
+        Returns
+        -------
+        json
+            status of the each triggered/processed event
+    """
+    logger.info("Entry point for RevenuFromSearchEngine process")
+    utils_fns = utl.Utils(logger)
+
     #remove unnecessary columns
-    bucket, s3_filename = get_s3filename_from_event(event)
-    print("****s3_filename **** - "+s3_filename)
+    bucket, s3_filename = utils_fns.get_s3filename_from_event(event)
+    logger.info("Bucket name - {0}".format(bucket))
+    logger.info("new s3 file name - {0}".format(s3_filename))
     
     if s3_filename =='':
+        logger.error("There is no S3 create or put event happend")
         return {
         'statusCode': 501,
         'body': json.dumps('No S3 Create event is happend')
     }
     else:
-        s3_response = readFilesFromS3(bucket , s3_filename)
-        hitdata_df = readInputdatatoPandasDataframe(s3_response)
+        # Read file content from S3 bucket & key
+        s3_response = utils_fns.readFilesFromS3(bucket , s3_filename)
+        
+        #Load input data to pandas dataframe
+        hitdata_df = utils_fns.readInputdatatoPandasDataframe(s3_response)
+        
+        logger.info("Schema of input data - ")
+        hitdata_df.info()
+        logger.info("Input Sample data - ")
+        hitdata_df.sample()
+        
+        
 
-    
+    #drop unrequired fields from dataframes
     hitdata_df.drop(['date_time','user_agent','geo_city','geo_region','geo_country','pagename'],axis = 1 , inplace=True)
     
     #derive page_url_domain and referrer_domain fields
-    hitdata_df['page_url_domain'] = hitdata_df['page_url'].transform(getDomainAndSearchKey)
-    hitdata_df['referrer_domain'] = hitdata_df['referrer'].transform(getDomainAndSearchKey)
+    hitdata_df['page_url_domain'] = hitdata_df['page_url'].transform(utils_fns.getDomainAndSearchKey)
+    hitdata_df['referrer_domain'] = hitdata_df['referrer'].transform(utils_fns.getDomainAndSearchKey)
     
     #filter and if page_url_domain and referrer_domain same  or filter event_list is not purchase event
     browse_and_purchase_df = hitdata_df.loc[(hitdata_df['event_list'] == 1) | (hitdata_df['page_url_domain'] != hitdata_df['referrer_domain'])]
@@ -124,10 +95,10 @@ def main(event, context):
         search_events_df = per_user_events_df.loc[per_user_events_df['event_list'] != 1]
         
         if purchased_events_df.shape[0] == 0:
-            print("There is no purchase event for  ip - "+ip + "page_url - "+page_url_domain)
+            logger.info("There is no purchase event for  ip - {0}  , page_url - {1} ".format(ip  , page_url_domain))
             continue
         elif search_events_df.shape[0] == 0 and purchased_events_df.shape[0] == 1:
-            print("Search and bought product with in the shopping website  - "+page_url_domain)
+            logger.info("Search and purchase were happended with in the shopping website  - "+page_url_domain)
             continue
         
         #Iterate through purchase events and find nearest search event for purchase event - Note : for loop helps if there are multiple purchase events for that domain
@@ -146,9 +117,9 @@ def main(event, context):
             nearest_search_df = search_events_df.loc[[minidx]]
             
             #get search engine , search keyword and revenue
-            search_engine = getDomainAndSearchKey(input = nearest_search_df.loc[nearest_search_df.index[0], 'referrer'] , lookingFor='domain')
-            search_key = getDomainAndSearchKey(input = nearest_search_df.loc[nearest_search_df.index[0], 'referrer'] , lookingFor='searchkey')
-            total_revenue = revenueFromProductList(pe_product_list)
+            search_engine = utils_fns.getDomainAndSearchKey(input = nearest_search_df.loc[nearest_search_df.index[0], 'referrer'] , lookingFor='domain')
+            search_key = utils_fns.getDomainAndSearchKey(input = nearest_search_df.loc[nearest_search_df.index[0], 'referrer'] , lookingFor='searchkey')
+            total_revenue = utils_fns.revenueFromProductList(pe_product_list)
             
             revenue_by_searchkey_list.append({'Search Engine Domain':search_engine.lower() , 'Search Keyword':search_key.lower() , 'Revenue':total_revenue})
     
@@ -158,10 +129,9 @@ def main(event, context):
     output_df = searchKeyRevenue_df[searchKeyRevenue_df.Revenue>0].groupby(['Search Engine Domain', 'Search Keyword'] , as_index=False)["Revenue"].agg('sum').sort_values(by='Revenue', ascending=False)
     
     #save output to S3
-    prefix = 'dev/output'
-    writeToS3(bucket , prefix , output_df)
+    utils_fns.writeToS3(bucket , output_df)
     
     return {
         'statusCode': 200,
-        'body': json.dumps('Revenue From Search engine - pipeline')
+        'body': json.dumps("Revenue From Search engine - process has been completed")
     }
