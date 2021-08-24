@@ -12,7 +12,7 @@ custom:
 package:
   individually: false
   exclude:
-    - package.json
+    - package-lock.json
     - package-log.json
     - node_modules/**
 
