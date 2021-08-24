@@ -4,13 +4,66 @@ import boto3
 import pandas as pd
 import re
 from io import StringIO
-import src.Utils as utl
-import src.MyCustomError as mcr
 
 # Pending - 
 # maintains classes
 # logger modules
 # document desction
+
+#Custom exception
+class MyCustomError(Exception):
+    def __init__(self, *args):
+        if args:
+            self.message = args[0]
+        else:
+            self.message = None
+    
+    def __str__(self):
+        if self.message:
+            return 'MyCustomError - , {0} '.format(self.message)
+        else:
+            return 'MyCustomError has been raised'
+
+def get_s3filename_from_event(event):
+    if 'Records' not in event:
+            return ''
+    for r in event.get('Records'):
+        # track only objected created events
+        if not ( ( r.get('eventName') == "ObjectCreated:Put" )  and ( 's3' in r ) ) : continue
+        bucket  = r['s3']['bucket']['name']
+        key =  r['s3']['object']['key']
+        return bucket, key
+
+def readFilesFromS3(bucket , key):
+    s3 = boto3.client('s3')
+    s3_response = s3.get_object(Bucket=bucket, Key=key)
+    print("Enter - readFilesFromS3")
+    return s3_response
+
+def writeToS3(bucket , prefix , output_df):
+    print("Write output to s3")
+    from datetime import datetime
+    now = datetime.now()
+    dt_string = now.strftime("%Y-%m-%d")
+    file_name = dt_string + '_SearchKeywordPerformance.tab'
+    s3_path = prefix+'/'+file_name
+    
+    s3 = boto3.client("s3")
+    csv_buf = StringIO()
+    output_df.to_csv(csv_buf, header=True, index=False , sep='\t')
+    csv_buf.seek(0)
+    s3.put_object(Bucket=bucket, Body=csv_buf.getvalue(), Key=s3_path)
+    
+
+def readInputdatatoPandasDataframe(s3_response):
+    print("Enter - readInputdatatoPandasDataframe")
+    status = s3_response.get("ResponseMetadata", {}).get("HTTPStatusCode")
+    if status == 200:
+        print(f"Successful S3 get_object response. Status - {status}")
+        input_df = pd.read_csv(s3_response.get("Body"), sep='\t')
+        return input_df
+    else:
+        raise MyCustomError('Issue in reading S3 files')
     
 def getDomainAndSearchKey(input, lookingFor='domain'):
     m = re.search('(https|http)?://([A-Za-z_0-9.-]+)((\/search)?.*(\?|&)(q=|p=)([a-zA-Z\+0-9]+).*)*', input)
@@ -21,7 +74,7 @@ def getDomainAndSearchKey(input, lookingFor='domain'):
             searchkey = m.group(7)
             return searchkey.replace("+"," ")
     else:
-        raise mcr.MyCustomError('Issue in Regex to get domain or searchkey')
+        raise MyCustomError('Issue in Regex to get domain or searchkey')
 
 def revenueFromProductList(product_list):
     revenue = 0
@@ -31,12 +84,9 @@ def revenueFromProductList(product_list):
     
 
 def main(event, context):
-    print("Entry")
-    utils_fns = utl.Utils()
-    print("RevenueFromSearchEngine - lambda")
     # TODO implement
     #remove unnecessary columns
-    bucket, s3_filename = utils_fns.get_s3filename_from_event(event)
+    bucket, s3_filename = get_s3filename_from_event(event)
     print("****s3_filename **** - "+s3_filename)
     
     if s3_filename =='':
@@ -45,8 +95,8 @@ def main(event, context):
         'body': json.dumps('No S3 Create event is happend')
     }
     else:
-        s3_response = utils_fns.readFilesFromS3(bucket , s3_filename)
-        hitdata_df = utils_fns.readInputdatatoPandasDataframe(s3_response)
+        s3_response = readFilesFromS3(bucket , s3_filename)
+        hitdata_df = readInputdatatoPandasDataframe(s3_response)
 
     
     hitdata_df.drop(['date_time','user_agent','geo_city','geo_region','geo_country','pagename'],axis = 1 , inplace=True)
@@ -109,7 +159,7 @@ def main(event, context):
     
     #save output to S3
     prefix = 'dev/output'
-    utils_fns.writeToS3(bucket , prefix , output_df)
+    writeToS3(bucket , prefix , output_df)
     
     return {
         'statusCode': 200,
