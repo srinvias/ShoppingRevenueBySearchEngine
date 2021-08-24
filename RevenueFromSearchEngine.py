@@ -1,3 +1,4 @@
+# - RevenueFromSearchEngine.py
 import json
 import boto3
 import pandas as pd
@@ -23,22 +24,29 @@ class MyCustomError(Exception):
         else:
             return 'MyCustomError has been raised'
 
-def readFilesFromS3():
-    bucket = 'adobe-assessment'
-    key = 'input/input_1.tab'
+def get_s3filename_from_event(event):
+    if 'Records' not in event:
+            return ''
+    for r in event.get('Records'):
+        # track only objected created events
+        if not ( ( r.get('eventName') == "ObjectCreated:Put" )  and ( 's3' in r ) ) : continue
+        bucket  = r['s3']['bucket']['name']
+        key =  r['s3']['object']['key']
+        return bucket, key
+
+def readFilesFromS3(bucket , key):
     s3 = boto3.client('s3')
     s3_response = s3.get_object(Bucket=bucket, Key=key)
     print("Enter - readFilesFromS3")
     return s3_response
 
-def writeToS3(output_df):
+def writeToS3(bucket , prefix , output_df):
     print("Write output to s3")
-    bucket = 'adobe-assessment'
     from datetime import datetime
     now = datetime.now()
     dt_string = now.strftime("%Y-%m-%d")
     file_name = dt_string + '_SearchKeywordPerformance.tab'
-    s3_path = 'output/'+file_name
+    s3_path = prefix+'/'+file_name
     
     s3 = boto3.client("s3")
     csv_buf = StringIO()
@@ -74,12 +82,23 @@ def revenueFromProductList(product_list):
         revenue = revenue + int(each_product.split(";")[3])
     return revenue
     
-s3_response = readFilesFromS3()
-hitdata_df = readInputdatatoPandasDataframe(s3_response)
 
 def main(event, context):
     # TODO implement
     #remove unnecessary columns
+    bucket, s3_filename = get_s3filename_from_event(event)
+    print("****s3_filename **** - "+s3_filename)
+    
+    if s3_filename =='':
+        return {
+        'statusCode': 501,
+        'body': json.dumps('No S3 Create event is happend')
+    }
+    else:
+        s3_response = readFilesFromS3(bucket , s3_filename)
+        hitdata_df = readInputdatatoPandasDataframe(s3_response)
+
+    
     hitdata_df.drop(['date_time','user_agent','geo_city','geo_region','geo_country','pagename'],axis = 1 , inplace=True)
     
     #derive page_url_domain and referrer_domain fields
@@ -88,8 +107,6 @@ def main(event, context):
     
     #filter and if page_url_domain and referrer_domain same  or filter event_list is not purchase event
     browse_and_purchase_df = hitdata_df.loc[(hitdata_df['event_list'] == 1) | (hitdata_df['page_url_domain'] != hitdata_df['referrer_domain'])]
-    # print(browse_and_purchase_df.info())
-    # print(browse_and_purchase_df)    
     
     #divide events into groups basedon ip & domain part of page_url
     group_data_by_user_and_app = browse_and_purchase_df.groupby(["ip","page_url_domain"])
@@ -127,8 +144,6 @@ def main(event, context):
             # find nearest search event for purchase event -- needs to test
             minidx = (pe_hit_time_gmt - search_events_df['hit_time_gmt']).idxmin()
             nearest_search_df = search_events_df.loc[[minidx]]
-            print("nearest_search_df")
-            print(nearest_search_df.info())
             
             #get search engine , search keyword and revenue
             search_engine = getDomainAndSearchKey(input = nearest_search_df.loc[nearest_search_df.index[0], 'referrer'] , lookingFor='domain')
@@ -143,7 +158,8 @@ def main(event, context):
     output_df = searchKeyRevenue_df[searchKeyRevenue_df.Revenue>0].groupby(['Search Engine Domain', 'Search Keyword'] , as_index=False)["Revenue"].agg('sum').sort_values(by='Revenue', ascending=False)
     
     #save output to S3
-    writeToS3(output_df)
+    prefix = 'dev/output'
+    writeToS3(bucket , prefix , output_df)
     
     return {
         'statusCode': 200,
